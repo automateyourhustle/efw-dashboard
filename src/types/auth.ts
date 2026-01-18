@@ -1,7 +1,7 @@
 export interface User {
   role: 'master' | 'team';
   hasAccess: boolean;
-  selectedCity?: 'dc' | 'atlanta';
+  selectedCity?: 'dc' | 'atlanta' | 'houston';
 }
 
 export interface AuthState {

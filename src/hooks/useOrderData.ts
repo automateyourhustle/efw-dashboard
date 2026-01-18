@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { parseCSVData, type ParsedOrder } from '../utils/csvParser';
 
-export function useOrderData(city?: 'dc' | 'atlanta') {
+export function useOrderData(city?: 'dc' | 'atlanta' | 'houston') {
   const [data, setData] = useState<ParsedOrder[]>([]);
   const [lastUpdated, setLastUpdated] = useState<string | null>(null);
   const [fileName, setFileName] = useState<string | null>(null);
@@ -77,15 +77,25 @@ export function useOrderData(city?: 'dc' | 'atlanta') {
       console.log(`Parsed ${parsedData.length} orders for city: ${city}`);
       
       // Validate that the CSV contains data for the selected city
-      const expectedSource = `Ebony Fit Weekend - ${city === 'dc' ? 'DC' : 'Atlanta'}`;
-      const hasValidData = parsedData.some(order => order.sourceName === expectedSource);
-      
-      console.log(`Expected source: "${expectedSource}"`);
-      console.log(`Has valid data: ${hasValidData}`);
-      console.log('Unique sources in data:', [...new Set(parsedData.map(o => o.sourceName))]);
-      
-      if (!hasValidData) {
-        throw new Error(`No data found for ${city.toUpperCase()} in this CSV file. Please check that you've uploaded the correct file.`);
+      // For Houston, we accept all data (already handled in parser)
+      // For other cities, validate source name
+      if (city !== 'houston') {
+        const expectedSource = `Ebony Fit Weekend - ${city === 'dc' ? 'DC' : 'Atlanta'}`;
+        const hasValidData = parsedData.some(order => order.sourceName === expectedSource);
+        
+        console.log(`Expected source: "${expectedSource}"`);
+        console.log(`Has valid data: ${hasValidData}`);
+        console.log('Unique sources in data:', [...new Set(parsedData.map(o => o.sourceName))]);
+        
+        if (!hasValidData) {
+          throw new Error(`No data found for ${city.toUpperCase()} in this CSV file. Please check that you've uploaded the correct file.`);
+        }
+      } else {
+        // For Houston, just check that we have some data
+        if (parsedData.length === 0) {
+          throw new Error('No valid order data found in this CSV file. Please check that the file contains completed orders.');
+        }
+        console.log(`Houston mode: Processed ${parsedData.length} orders (source name ignored)`);
       }
       
       // Delete existing data for this city before inserting new data

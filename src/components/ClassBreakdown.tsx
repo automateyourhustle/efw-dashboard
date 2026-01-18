@@ -35,6 +35,29 @@ const ATLANTA_CLASSES = [
   'CLASS TICKET BUNDLES - 4 Class Ticket Bundle'
 ];
 
+// Complete list of Houston classes
+const HOUSTON_CLASSES = [
+  'CLASS TICKET BUNDLES - 2 Class Ticket Bundle',
+  'CLASS TICKET BUNDLES - 3 Class Ticket Bundle',
+  'CLASS TICKET BUNDLES - 4 Class Ticket Bundle',
+  'VIP LOUNGE',
+  'FAMILY & FRIENDS LIFT PARTY',
+  'AFRO BEAT BOOTCAMP',
+  'TRAP SCULPT & MOBILITY',
+  'GLUTE CAMP',
+  'HTX - NORTHSIDE VS SOUTHSIDE',
+  'ONLY YAMS',
+  'STEP WITH MARSHE',
+  'POWER HOUR',
+  'BRICK WIT RINA',
+  'EBONY FIT DEADLIFT PARTY',
+  'TRAP YOGA',
+  'RECOMP BOOTCAMP',
+  'LINE DANCE LAB',
+  'BEAT BOXING BOOTCAMP',
+  'EBONY FIT CLOSE OUT'
+];
+
 export function ClassBreakdown({ data, userRole }: ClassBreakdownProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [sortField, setSortField] = useState<'name' | 'quantity' | 'revenue'>('quantity');
@@ -43,12 +66,15 @@ export function ClassBreakdown({ data, userRole }: ClassBreakdownProps) {
   const isMaster = userRole === 'master';
 
   const classStats = useMemo(() => {
-    // First, determine if this is Atlanta data
+    // First, determine which city this data is for
     const isAtlantaData = data.some(order => 
       order.sourceName === 'Ebony Fit Weekend - Atlanta'
     );
+    const isHoustonData = data.some(order => 
+      order.sourceName === 'Ebony Fit Weekend - Houston'
+    );
     
-    // Initialize stats with all classes (for Atlanta) or empty object (for DC)
+    // Initialize stats with all classes (for Atlanta/Houston) or empty object (for DC)
     const initialStats: Record<string, {
       name: string;
       quantity: number;
@@ -60,6 +86,17 @@ export function ClassBreakdown({ data, userRole }: ClassBreakdownProps) {
     if (isAtlantaData) {
       // For Atlanta, initialize all classes with zero values
       ATLANTA_CLASSES.forEach(className => {
+        initialStats[className] = {
+          name: className,
+          quantity: 0,
+          revenue: 0,
+          customers: new Set<string>(),
+          orders: []
+        };
+      });
+    } else if (isHoustonData) {
+      // For Houston, initialize all classes with zero values
+      HOUSTON_CLASSES.forEach(className => {
         initialStats[className] = {
           name: className,
           quantity: 0,

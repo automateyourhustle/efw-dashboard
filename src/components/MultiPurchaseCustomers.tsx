@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { Download, Mail, Phone, Star } from 'lucide-react';
+import { Download, Mail, Phone, Star, Users } from 'lucide-react';
 import { type ParsedOrder } from '../utils/csvParser';
 
 interface MultiPurchaseCustomersProps {

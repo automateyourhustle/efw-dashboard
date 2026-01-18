@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Upload, BarChart3, Users, DollarSign, FileDown, Search, Filter, LogOut, Trophy, AlertCircle } from 'lucide-react';
+import { Upload, BarChart3, Users, DollarSign, FileDown, Search, Filter, LogOut, Trophy, AlertCircle, CreditCard } from 'lucide-react';
 import { LoginScreen } from './components/LoginScreen';
 import { CitySelector } from './components/CitySelector';
 import { DataUploader } from './components/DataUploader';
@@ -8,6 +8,7 @@ import { ClassBreakdown } from './components/ClassBreakdown';
 import { CustomerLists } from './components/CustomerLists';
 import { MultiPurchaseCustomers } from './components/MultiPurchaseCustomers';
 import { Leaderboard } from './components/Leaderboard';
+import { SalesByMOP } from './components/SalesByMOP';
 import { useAuth } from './hooks/useAuth';
 import { useOrderData } from './hooks/useOrderData';
 import type { ParsedOrder } from './utils/csvParser';
@@ -15,7 +16,7 @@ import type { ParsedOrder } from './utils/csvParser';
 function App() {
   const { isAuthenticated, user, login, logout, selectCity } = useAuth();
   const { data: csvData, isLoading, error, uploadData, lastUpdated, fileName } = useOrderData(user?.selectedCity);
-  const [activeTab, setActiveTab] = useState<'overview' | 'classes' | 'leaderboard' | 'customers' | 'multi'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'classes' | 'leaderboard' | 'customers' | 'multi' | 'mop'>('overview');
   const [showUploader, setShowUploader] = useState(false);
 
   const hasData = csvData.length > 0;
@@ -60,6 +61,7 @@ function App() {
     { id: 'leaderboard' as const, label: 'Leaderboard', icon: Trophy },
     { id: 'customers' as const, label: 'Customer Lists', icon: Users },
     { id: 'multi' as const, label: 'Multi-Purchase', icon: DollarSign, masterOnly: true },
+    { id: 'mop' as const, label: 'Sales by MOP', icon: CreditCard, masterOnly: true },
   ];
 
   const tabs = allTabs.filter(tab => isMaster || !tab.masterOnly);
@@ -86,10 +88,11 @@ function App() {
               </div>
               <div>
                 <h1 className="text-lg sm:text-xl font-bold text-gray-900">
-                  Ebony Fit Weekend - {user?.selectedCity === 'dc' ? 'DC' : 'Atlanta'}
+                  Ebony Fit Weekend - {user?.selectedCity === 'dc' ? 'DC' : user?.selectedCity === 'atlanta' ? 'Atlanta' : 'Houston'}
+                  {user?.selectedCity === 'dc' || user?.selectedCity === 'atlanta' ? ' 2025' : ' 2026'}
                 </h1>
                 <p className="text-xs sm:text-sm text-gray-500">
-                  {user?.selectedCity === 'dc' ? 'DC' : 'Atlanta'} Event Dashboard{user?.role === 'master' ? ' • Master Access' : user?.role === 'team' ? ' • Team Access' : ''}
+                  {user?.selectedCity === 'dc' ? 'DC' : user?.selectedCity === 'atlanta' ? 'Atlanta' : 'Houston'} Event Dashboard{user?.role === 'master' ? ' • Master Access' : user?.role === 'team' ? ' • Team Access' : ''}
                 </p>
               </div>
             </div>
@@ -109,13 +112,22 @@ function App() {
                 </div>
               )}
               <div className="flex items-center space-x-2 sm:space-x-3">
-                <button
-                  onClick={() => selectCity(user?.selectedCity === 'dc' ? 'atlanta' : 'dc')}
-                  className="inline-flex items-center space-x-1 sm:space-x-2 px-2 sm:px-3 py-2 bg-purple-600 text-white font-medium rounded-lg hover:bg-purple-700 transition-colors duration-200 text-xs sm:text-sm"
-                >
-                  <span className="hidden sm:inline">Switch to {user?.selectedCity === 'dc' ? 'Atlanta' : 'DC'}</span>
-                  <span className="sm:hidden">{user?.selectedCity === 'dc' ? 'ATL' : 'DC'}</span>
-                </button>
+                {user?.selectedCity && (
+                  <select
+                    onChange={(e) => selectCity(e.target.value as 'dc' | 'atlanta' | 'houston')}
+                    value={user.selectedCity}
+                    className="inline-flex items-center space-x-1 sm:space-x-2 px-2 sm:px-3 py-2 bg-purple-600 text-white font-medium rounded-lg hover:bg-purple-700 transition-colors duration-200 text-xs sm:text-sm border-none cursor-pointer appearance-none bg-no-repeat bg-right pr-8"
+                    style={{
+                      backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='white' d='M6 9L1 4h10z'/%3E%3C/svg%3E")`,
+                      backgroundPosition: 'right 0.5rem center',
+                      paddingRight: '2rem'
+                    }}
+                  >
+                    <option value="dc" className="bg-white text-gray-900">DC 2025</option>
+                    <option value="atlanta" className="bg-white text-gray-900">Atlanta 2025</option>
+                    <option value="houston" className="bg-white text-gray-900">Houston 2026</option>
+                  </select>
+                )}
                 <button
                   onClick={() => setShowUploader(!showUploader)}
                   className="inline-flex items-center space-x-1 sm:space-x-2 px-2 sm:px-3 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors duration-200 text-xs sm:text-sm"
@@ -176,7 +188,7 @@ function App() {
               </div>
               <h2 className="text-2xl font-bold text-gray-900 mb-2">No Data Available</h2>
               <p className="text-gray-600">
-                Click "Upload Data" to load your Ebony Fit Weekend {user?.selectedCity === 'dc' ? 'DC' : 'Atlanta'} order CSV file and view comprehensive analytics.
+                Click "Upload Data" to load your Ebony Fit Weekend {user?.selectedCity === 'dc' ? 'DC' : user?.selectedCity === 'atlanta' ? 'Atlanta' : 'Houston'} order CSV file and view comprehensive analytics.
               </p>
             </div>
             <div className="text-center">
@@ -212,7 +224,8 @@ function App() {
                        id === 'classes' ? 'Classes' : 
                        id === 'leaderboard' ? 'Ranks' :
                        id === 'customers' ? 'Lists' : 
-                       'Multi'}
+                       id === 'multi' ? 'Multi' :
+                       'MOP'}
                     </span>
                   </button>
                 ))}
@@ -225,6 +238,7 @@ function App() {
             {activeTab === 'leaderboard' && <Leaderboard data={csvData} userRole={user?.role} />}
             {activeTab === 'customers' && <CustomerLists data={csvData} />}
             {activeTab === 'multi' && isMaster && <MultiPurchaseCustomers data={csvData} />}
+            {activeTab === 'mop' && isMaster && <SalesByMOP data={csvData} />}
           </div>
           )
         )}

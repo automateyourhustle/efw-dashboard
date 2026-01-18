@@ -14,9 +14,10 @@ export interface ParsedOrder {
   orderSubTotal: number;
   orderTaxAmount: number;
   orderTotalAmount: number;
+  paymentMethod?: string;
 }
 
-export function parseCSVData(csvText: string, filterCity?: 'dc' | 'atlanta'): ParsedOrder[] {
+export function parseCSVData(csvText: string, filterCity?: 'dc' | 'atlanta' | 'houston'): ParsedOrder[] {
   const lines = csvText.trim().split('\n');
   const headers = parseCSVLine(lines[0]);
   
@@ -30,6 +31,19 @@ export function parseCSVData(csvText: string, filterCity?: 'dc' | 'atlanta'): Pa
     }
     return index;
   };
+
+  // Try to find payment method column (optional - may not exist in all CSVs)
+  let paymentMethodIndex: number | null = null;
+  try {
+    paymentMethodIndex = getColumnIndex('Payment Method');
+  } catch {
+    // Payment method column not found, that's okay
+    try {
+      paymentMethodIndex = getColumnIndex('Payment method');
+    } catch {
+      // Still not found, will be null
+    }
+  }
 
   const indices = {
     orderId: getColumnIndex('Internal order id'),
@@ -46,11 +60,13 @@ export function parseCSVData(csvText: string, filterCity?: 'dc' | 'atlanta'): Pa
     lineItemSubtotal: getColumnIndex('Line item Subtotal'),
     orderSubTotal: getColumnIndex('Sub total'),
     orderTaxAmount: getColumnIndex('Tax Amount'),
-    orderTotalAmount: getColumnIndex('Total Amount')
+    orderTotalAmount: getColumnIndex('Total Amount'),
+    paymentMethod: paymentMethodIndex
   };
 
   // Determine which source to filter for
-  const targetSource = filterCity 
+  const isHouston = filterCity === 'houston';
+  const targetSource = filterCity && !isHouston
     ? `Ebony Fit Weekend - ${filterCity === 'dc' ? 'DC' : 'Atlanta'}`
     : null;
 
@@ -61,18 +77,32 @@ export function parseCSVData(csvText: string, filterCity?: 'dc' | 'atlanta'): Pa
     orderTaxAmount: number;
     orderTotalAmount: number;
     sourceName: string;
+    paymentMethod?: string;
   }>();
   
   console.log('Starting first pass - looking for valid orders...');
   if (targetSource) {
     console.log(`Filtering for source: "${targetSource}"`);
+  } else if (isHouston) {
+    console.log('Houston mode: Accepting all completed orders regardless of source name');
   }
   
   for (let i = 1; i < lines.length; i++) {
     const values = parseCSVLine(lines[i]);
     
     // Skip empty lines or lines with insufficient data
-    if (values.length < Math.max(...Object.values(indices)) + 1) continue;
+    // For second pass, we need at least the basic required columns
+    const requiredIndices = [
+      indices.orderId,
+      indices.className,
+      indices.quantity,
+      indices.price,
+      indices.lineItemSubtotal,
+      indices.orderSubTotal,
+      indices.orderTaxAmount,
+      indices.orderTotalAmount
+    ].filter((v): v is number => v !== null && typeof v === 'number');
+    if (requiredIndices.length === 0 || values.length < Math.max(...requiredIndices) + 1) continue;
     
     const orderId = values[indices.orderId]?.trim() || '';
     const sourceName = values[indices.sourceName]?.trim() || '';
@@ -83,8 +113,10 @@ export function parseCSVData(csvText: string, filterCity?: 'dc' | 'atlanta'): Pa
       console.log(`Row ${i}: OrderID="${orderId}", Source="${sourceName}", Status="${status}"`);
     }
     
-    // Only process rows that have an order ID and source name
-    if (!orderId || !sourceName) continue;
+    // For Houston, we don't require source name to match - we accept all completed orders
+    // For other cities, we need order ID and source name
+    if (!orderId) continue;
+    if (!isHouston && !sourceName) continue;
     
     // For debugging - log all unique source names we encounter
     if (i <= 20) {
@@ -92,12 +124,22 @@ export function parseCSVData(csvText: string, filterCity?: 'dc' | 'atlanta'): Pa
     }
     
     // Check for valid city sources
-    const isValidSource = targetSource ? sourceName === targetSource : 
-      (sourceName === 'Ebony Fit Weekend - DC' || sourceName === 'Ebony Fit Weekend - Atlanta');
+    // For Houston: accept all completed orders regardless of source name
+    // For other cities: match the target source
+    const isValidSource = isHouston 
+      ? true // Houston accepts all orders
+      : (targetSource ? sourceName === targetSource : 
+         (sourceName === 'Ebony Fit Weekend - DC' || sourceName === 'Ebony Fit Weekend - Atlanta'));
     
     if (isValidSource && status.toLowerCase() === 'completed' && orderId) {
-      console.log(`Valid order found: ${orderId} for ${sourceName}`);
+      const actualSourceName = isHouston ? 'Ebony Fit Weekend - Houston' : sourceName;
+      console.log(`Valid order found: ${orderId} for ${actualSourceName}`);
       validOrderIds.add(orderId);
+      
+      // Get payment method if available
+      const paymentMethod = indices.paymentMethod !== null && indices.paymentMethod !== undefined
+        ? values[indices.paymentMethod]?.trim() || undefined
+        : undefined;
       
       // Store order-level totals
       if (!orderTotals.has(orderId)) {
@@ -105,7 +147,8 @@ export function parseCSVData(csvText: string, filterCity?: 'dc' | 'atlanta'): Pa
           orderSubTotal: parseFloat(values[indices.orderSubTotal]?.replace(/[^0-9.-]/g, '') || '0'),
           orderTaxAmount: parseFloat(values[indices.orderTaxAmount]?.replace(/[^0-9.-]/g, '') || '0'),
           orderTotalAmount: parseFloat(values[indices.orderTotalAmount]?.replace(/[^0-9.-]/g, '') || '0'),
-          sourceName: sourceName
+          sourceName: actualSourceName,
+          paymentMethod: paymentMethod
         });
       }
     }
@@ -123,7 +166,8 @@ export function parseCSVData(csvText: string, filterCity?: 'dc' | 'atlanta'): Pa
     const values = parseCSVLine(lines[i]);
     
     // Skip empty lines or lines with insufficient data
-    if (values.length < Math.max(...Object.values(indices)) + 1) continue;
+    const allIndices = Object.values(indices).filter((v): v is number => v !== null && typeof v === 'number');
+    if (allIndices.length === 0 || values.length < Math.max(...allIndices) + 1) continue;
     
     const orderId = values[indices.orderId]?.trim() || '';
     
@@ -152,7 +196,6 @@ export function parseCSVData(csvText: string, filterCity?: 'dc' | 'atlanta'): Pa
     let customerEmail = values[indices.customerEmail]?.trim() || '';
     let customerPhone = values[indices.customerPhone]?.trim() || '';
     let status = values[indices.status]?.trim() || '';
-    let sourceName = values[indices.sourceName]?.trim() || orderData.sourceName;
     let orderDate = values[indices.orderDate]?.trim() || '';
     let orderTime = values[indices.orderTime]?.trim() || '';
     
@@ -160,7 +203,12 @@ export function parseCSVData(csvText: string, filterCity?: 'dc' | 'atlanta'): Pa
     if (!customerName || !customerEmail) {
       for (let j = 1; j < lines.length; j++) {
         const mainValues = parseCSVLine(lines[j]);
-        if (mainValues.length < Math.max(...Object.values(indices)) + 1) continue;
+        const mainRequiredIndices = [
+          indices.orderId,
+          indices.customerName,
+          indices.customerEmail
+        ].filter(v => v !== null && typeof v === 'number') as number[];
+        if (mainValues.length < Math.max(...mainRequiredIndices) + 1) continue;
         
         const mainOrderId = mainValues[indices.orderId]?.trim() || '';
         const mainCustomerName = mainValues[indices.customerName]?.trim() || '';
@@ -195,7 +243,8 @@ export function parseCSVData(csvText: string, filterCity?: 'dc' | 'atlanta'): Pa
       lineItemSubtotal: parseFloat(values[indices.lineItemSubtotal]?.replace(/[^0-9.-]/g, '') || '0'),
       orderSubTotal: orderData.orderSubTotal,
       orderTaxAmount: orderData.orderTaxAmount,
-      orderTotalAmount: orderData.orderTotalAmount
+      orderTotalAmount: orderData.orderTotalAmount,
+      paymentMethod: orderData.paymentMethod
     };
 
     orders.push(order);
