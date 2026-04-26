@@ -35,7 +35,7 @@ export function useAuth() {
     localStorage.setItem('ebony-fit-auth', JSON.stringify(newAuthState));
   };
 
-  const selectCity = (city: 'dc' | 'atlanta' | 'houston') => {
+  const selectCity = (city: 'dc' | 'atlanta' | 'houston' | 'charlotte') => {
     if (authState.user) {
       const newAuthState: AuthState = {
         ...authState,

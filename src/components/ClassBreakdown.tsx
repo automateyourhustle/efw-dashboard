@@ -58,6 +58,24 @@ const HOUSTON_CLASSES = [
   'EBONY FIT CLOSE OUT'
 ];
 
+// Complete list of Charlotte classes
+const CHARLOTTE_CLASSES = [
+  'BEAT BOXING & PILATES',
+  'EBONY FIT FIELD DAY',
+  'CLASS TICKET BUNDLES',
+  'BAND CAMP X CHARFIT',
+  'UPBEAT BODY TAP',
+  'CELLULAR SELF CARE: NERVOUS SYSTEM FITNESS EXPERIENCE WITH KI',
+  'DMV JUMP CLUB',
+  'FLEX IN THE CITY',
+  'MEET ON THE BRICKS',
+  'J-ERA BOOTCAMP',
+  '704 VS 757',
+  'ONLY YAMS',
+  'GOGETIT BOOTCAMP',
+  'POWER HOUR'
+];
+
 export function ClassBreakdown({ data, userRole }: ClassBreakdownProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [sortField, setSortField] = useState<'name' | 'quantity' | 'revenue'>('quantity');
@@ -72,6 +90,9 @@ export function ClassBreakdown({ data, userRole }: ClassBreakdownProps) {
     );
     const isHoustonData = data.some(order => 
       order.sourceName === 'Ebony Fit Weekend - Houston'
+    );
+    const isCharlotteData = data.some(order =>
+      order.sourceName === 'Ebony Fit Weekend - Charlotte'
     );
     
     // Initialize stats with all classes (for Atlanta/Houston) or empty object (for DC)
@@ -97,6 +118,17 @@ export function ClassBreakdown({ data, userRole }: ClassBreakdownProps) {
     } else if (isHoustonData) {
       // For Houston, initialize all classes with zero values
       HOUSTON_CLASSES.forEach(className => {
+        initialStats[className] = {
+          name: className,
+          quantity: 0,
+          revenue: 0,
+          customers: new Set<string>(),
+          orders: []
+        };
+      });
+    } else if (isCharlotteData) {
+      // For Charlotte, initialize all classes with zero values
+      CHARLOTTE_CLASSES.forEach(className => {
         initialStats[className] = {
           name: className,
           quantity: 0,

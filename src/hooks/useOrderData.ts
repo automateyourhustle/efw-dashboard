@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { parseCSVData, type ParsedOrder } from '../utils/csvParser';
 
-export function useOrderData(city?: 'dc' | 'atlanta' | 'houston') {
+export function useOrderData(city?: 'dc' | 'atlanta' | 'houston' | 'charlotte') {
   const [data, setData] = useState<ParsedOrder[]>([]);
   const [lastUpdated, setLastUpdated] = useState<string | null>(null);
   const [fileName, setFileName] = useState<string | null>(null);
@@ -76,10 +76,9 @@ export function useOrderData(city?: 'dc' | 'atlanta' | 'houston') {
       
       console.log(`Parsed ${parsedData.length} orders for city: ${city}`);
       
-      // Validate that the CSV contains data for the selected city
-      // For Houston, we accept all data (already handled in parser)
-      // For other cities, validate source name
-      if (city !== 'houston') {
+      // Validate that the CSV contains data for the selected city.
+      // Houston and Charlotte accept all completed orders (already handled in parser).
+      if (city !== 'houston' && city !== 'charlotte') {
         const expectedSource = `Ebony Fit Weekend - ${city === 'dc' ? 'DC' : 'Atlanta'}`;
         const hasValidData = parsedData.some(order => order.sourceName === expectedSource);
         
@@ -91,11 +90,11 @@ export function useOrderData(city?: 'dc' | 'atlanta' | 'houston') {
           throw new Error(`No data found for ${city.toUpperCase()} in this CSV file. Please check that you've uploaded the correct file.`);
         }
       } else {
-        // For Houston, just check that we have some data
+        // For Houston/Charlotte, just check that we have some data
         if (parsedData.length === 0) {
           throw new Error('No valid order data found in this CSV file. Please check that the file contains completed orders.');
         }
-        console.log(`Houston mode: Processed ${parsedData.length} orders (source name ignored)`);
+        console.log(`${city} mode: Processed ${parsedData.length} orders (source name ignored)`);
       }
       
       // Delete existing data for this city before inserting new data

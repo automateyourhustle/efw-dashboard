@@ -18,6 +18,18 @@ function App() {
   const { data: csvData, isLoading, error, uploadData, lastUpdated, fileName } = useOrderData(user?.selectedCity);
   const [activeTab, setActiveTab] = useState<'overview' | 'classes' | 'leaderboard' | 'customers' | 'multi' | 'mop'>('overview');
   const [showUploader, setShowUploader] = useState(false);
+  const cityDisplayName: Record<'dc' | 'atlanta' | 'houston' | 'charlotte', string> = {
+    dc: 'DC',
+    atlanta: 'Atlanta',
+    houston: 'Houston',
+    charlotte: 'Charlotte'
+  };
+  const cityYear: Record<'dc' | 'atlanta' | 'houston' | 'charlotte', string> = {
+    dc: '2025',
+    atlanta: '2025',
+    houston: '2026',
+    charlotte: '2026'
+  };
 
   const hasData = csvData.length > 0;
   const isMaster = user?.role === 'master';
@@ -88,11 +100,10 @@ function App() {
               </div>
               <div>
                 <h1 className="text-lg sm:text-xl font-bold text-gray-900">
-                  Ebony Fit Weekend - {user?.selectedCity === 'dc' ? 'DC' : user?.selectedCity === 'atlanta' ? 'Atlanta' : 'Houston'}
-                  {user?.selectedCity === 'dc' || user?.selectedCity === 'atlanta' ? ' 2025' : ' 2026'}
+                  Ebony Fit Weekend - {cityDisplayName[user?.selectedCity ?? 'dc']} {cityYear[user?.selectedCity ?? 'dc']}
                 </h1>
                 <p className="text-xs sm:text-sm text-gray-500">
-                  {user?.selectedCity === 'dc' ? 'DC' : user?.selectedCity === 'atlanta' ? 'Atlanta' : 'Houston'} Event Dashboard{user?.role === 'master' ? ' • Master Access' : user?.role === 'team' ? ' • Team Access' : ''}
+                  {cityDisplayName[user?.selectedCity ?? 'dc']} Event Dashboard{user?.role === 'master' ? ' • Master Access' : user?.role === 'team' ? ' • Team Access' : ''}
                 </p>
               </div>
             </div>
@@ -114,7 +125,7 @@ function App() {
               <div className="flex items-center space-x-2 sm:space-x-3">
                 {user?.selectedCity && (
                   <select
-                    onChange={(e) => selectCity(e.target.value as 'dc' | 'atlanta' | 'houston')}
+                    onChange={(e) => selectCity(e.target.value as 'dc' | 'atlanta' | 'houston' | 'charlotte')}
                     value={user.selectedCity}
                     className="inline-flex items-center space-x-1 sm:space-x-2 px-2 sm:px-3 py-2 bg-purple-600 text-white font-medium rounded-lg hover:bg-purple-700 transition-colors duration-200 text-xs sm:text-sm border-none cursor-pointer appearance-none bg-no-repeat bg-right pr-8"
                     style={{
@@ -126,6 +137,7 @@ function App() {
                     <option value="dc" className="bg-white text-gray-900">DC 2025</option>
                     <option value="atlanta" className="bg-white text-gray-900">Atlanta 2025</option>
                     <option value="houston" className="bg-white text-gray-900">Houston 2026</option>
+                    <option value="charlotte" className="bg-white text-gray-900">Charlotte 2026</option>
                   </select>
                 )}
                 <button
@@ -188,7 +200,7 @@ function App() {
               </div>
               <h2 className="text-2xl font-bold text-gray-900 mb-2">No Data Available</h2>
               <p className="text-gray-600">
-                Click "Upload Data" to load your Ebony Fit Weekend {user?.selectedCity === 'dc' ? 'DC' : user?.selectedCity === 'atlanta' ? 'Atlanta' : 'Houston'} order CSV file and view comprehensive analytics.
+                Click "Upload Data" to load your Ebony Fit Weekend {cityDisplayName[user?.selectedCity ?? 'dc']} order CSV file and view comprehensive analytics.
               </p>
             </div>
             <div className="text-center">

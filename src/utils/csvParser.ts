@@ -17,7 +17,7 @@ export interface ParsedOrder {
   paymentMethod?: string;
 }
 
-export function parseCSVData(csvText: string, filterCity?: 'dc' | 'atlanta' | 'houston'): ParsedOrder[] {
+export function parseCSVData(csvText: string, filterCity?: 'dc' | 'atlanta' | 'houston' | 'charlotte'): ParsedOrder[] {
   const lines = csvText.trim().split('\n');
   const headers = parseCSVLine(lines[0]);
   
@@ -65,8 +65,8 @@ export function parseCSVData(csvText: string, filterCity?: 'dc' | 'atlanta' | 'h
   };
 
   // Determine which source to filter for
-  const isHouston = filterCity === 'houston';
-  const targetSource = filterCity && !isHouston
+  const isAllocatedCity = filterCity === 'houston' || filterCity === 'charlotte';
+  const targetSource = filterCity && !isAllocatedCity
     ? `Ebony Fit Weekend - ${filterCity === 'dc' ? 'DC' : 'Atlanta'}`
     : null;
 
@@ -83,8 +83,8 @@ export function parseCSVData(csvText: string, filterCity?: 'dc' | 'atlanta' | 'h
   console.log('Starting first pass - looking for valid orders...');
   if (targetSource) {
     console.log(`Filtering for source: "${targetSource}"`);
-  } else if (isHouston) {
-    console.log('Houston mode: Accepting all completed orders regardless of source name');
+  } else if (isAllocatedCity) {
+    console.log(`${filterCity} mode: Accepting all completed orders regardless of source name`);
   }
   
   for (let i = 1; i < lines.length; i++) {
@@ -113,10 +113,10 @@ export function parseCSVData(csvText: string, filterCity?: 'dc' | 'atlanta' | 'h
       console.log(`Row ${i}: OrderID="${orderId}", Source="${sourceName}", Status="${status}"`);
     }
     
-    // For Houston, we don't require source name to match - we accept all completed orders
+    // Allocated cities don't require source name to match - they accept all completed orders.
     // For other cities, we need order ID and source name
     if (!orderId) continue;
-    if (!isHouston && !sourceName) continue;
+    if (!isAllocatedCity && !sourceName) continue;
     
     // For debugging - log all unique source names we encounter
     if (i <= 20) {
@@ -124,15 +124,19 @@ export function parseCSVData(csvText: string, filterCity?: 'dc' | 'atlanta' | 'h
     }
     
     // Check for valid city sources
-    // For Houston: accept all completed orders regardless of source name
+    // For allocated cities: accept all completed orders regardless of source name
     // For other cities: match the target source
-    const isValidSource = isHouston 
-      ? true // Houston accepts all orders
+    const isValidSource = isAllocatedCity
+      ? true // Allocated cities accept all orders
       : (targetSource ? sourceName === targetSource : 
          (sourceName === 'Ebony Fit Weekend - DC' || sourceName === 'Ebony Fit Weekend - Atlanta'));
     
     if (isValidSource && status.toLowerCase() === 'completed' && orderId) {
-      const actualSourceName = isHouston ? 'Ebony Fit Weekend - Houston' : sourceName;
+      const actualSourceName = filterCity === 'houston'
+        ? 'Ebony Fit Weekend - Houston'
+        : filterCity === 'charlotte'
+          ? 'Ebony Fit Weekend - Charlotte'
+          : sourceName;
       console.log(`Valid order found: ${orderId} for ${actualSourceName}`);
       validOrderIds.add(orderId);
       
