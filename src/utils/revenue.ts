@@ -20,6 +20,26 @@ export function getTotalOrderRevenue(data: ParsedOrder[]): number {
   return Array.from(uniqueOrders.values()).reduce((sum, amount) => sum + amount, 0);
 }
 
+export function getTotalOrderTax(data: ParsedOrder[]): number {
+  const uniqueOrders = new Map<string, number>();
+  data.forEach(order => {
+    if (!uniqueOrders.has(order.orderId)) {
+      uniqueOrders.set(order.orderId, order.orderTaxAmount);
+    }
+  });
+  return Array.from(uniqueOrders.values()).reduce((sum, amount) => sum + amount, 0);
+}
+
+export function getTotalOrderSubtotal(data: ParsedOrder[]): number {
+  const uniqueOrders = new Map<string, number>();
+  data.forEach(order => {
+    if (!uniqueOrders.has(order.orderId)) {
+      uniqueOrders.set(order.orderId, order.orderSubTotal);
+    }
+  });
+  return Array.from(uniqueOrders.values()).reduce((sum, amount) => sum + amount, 0);
+}
+
 export function getClassRevenueBreakdown(data: ParsedOrder[]): {
   bundleRevenue: number;
   nonBundleRevenue: number;

@@ -5,12 +5,15 @@ import type { CityOverride, CityOverrideInput } from '../types/overrides';
 import {
   calculateRevenueMultiplier,
   getClassRevenueBreakdown,
-  getTotalOrderRevenue
+  getTotalOrderRevenue,
+  getTotalOrderSubtotal,
+  getTotalOrderTax
 } from '../utils/revenue';
 
 interface AdminPanelProps {
   cityLabel: string;
   data: ParsedOrder[];
+  displayData: ParsedOrder[];
   rawLastUpdated: string | null;
   overrides: CityOverride | null;
   onSave: (input: CityOverrideInput) => Promise<{ success: boolean; error?: string }>;
@@ -33,6 +36,7 @@ function fromDatetimeLocalValue(value: string): string | null {
 export function AdminPanel({
   cityLabel,
   data,
+  displayData,
   rawLastUpdated,
   overrides,
   onSave,
@@ -44,7 +48,11 @@ export function AdminPanel({
   const [statusMessage, setStatusMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   const currentRevenue = useMemo(() => getTotalOrderRevenue(data), [data]);
+  const currentSubtotal = useMemo(() => getTotalOrderSubtotal(data), [data]);
+  const currentTax = useMemo(() => getTotalOrderTax(data), [data]);
+  const effectiveTax = useMemo(() => getTotalOrderTax(displayData), [displayData]);
   const revenueBreakdown = useMemo(() => getClassRevenueBreakdown(data), [data]);
+  const hasRevenueOverride = overrides?.overrideTotalRevenue != null;
 
   useEffect(() => {
     setRevenueInput(
@@ -132,10 +140,20 @@ export function AdminPanel({
             No CSV data uploaded yet for this city. You can still set an override upload date, but revenue overrides require uploaded data.
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
             <div className="bg-gray-50 rounded-lg p-4">
-              <p className="text-sm text-gray-600">Current Total Revenue</p>
+              <p className="text-sm text-gray-600">Total Revenue</p>
               <p className="text-2xl font-bold text-gray-900">${currentRevenue.toLocaleString('en-US', { minimumFractionDigits: 2 })}</p>
+              <p className="text-xs text-gray-500 mt-1">Subtotal: ${currentSubtotal.toLocaleString('en-US', { minimumFractionDigits: 2 })}</p>
+            </div>
+            <div className="bg-gray-50 rounded-lg p-4">
+              <p className="text-sm text-gray-600">Total Tax Collected</p>
+              <p className="text-2xl font-bold text-gray-900">${currentTax.toLocaleString('en-US', { minimumFractionDigits: 2 })}</p>
+              {hasRevenueOverride && (
+                <p className="text-xs text-purple-700 mt-1">
+                  Adjusted: ${effectiveTax.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                </p>
+              )}
             </div>
             <div className="bg-gray-50 rounded-lg p-4">
               <p className="text-sm text-gray-600">Non-Bundle Revenue</p>

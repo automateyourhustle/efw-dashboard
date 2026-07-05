@@ -294,6 +294,7 @@ function App() {
               <AdminPanel
                 cityLabel={cityLabel}
                 data={csvData}
+                displayData={displayData}
                 rawLastUpdated={lastUpdated}
                 overrides={overrides}
                 onSave={saveOverrides}
