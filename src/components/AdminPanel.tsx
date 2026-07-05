@@ -168,11 +168,11 @@ export function AdminPanel({
               />
             </div>
             <p className="text-xs text-gray-500 mt-2">
-              Non-bundle class revenue scales by the same multiplier. Class ticket bundles are not adjusted.
+              Non-bundle class revenue and ticket counts scale by the same multiplier. Class ticket bundles are not adjusted.
             </p>
             {previewMultiplier != null && previewMultiplier !== 1 && (
               <p className="text-xs text-purple-700 mt-2">
-                Preview multiplier for non-bundle classes: {(previewMultiplier * 100).toFixed(2)}%
+                Preview multiplier for non-bundle classes: {(previewMultiplier * 100).toFixed(2)}% (revenue and tickets)
               </p>
             )}
           </div>

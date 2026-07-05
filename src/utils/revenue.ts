@@ -111,9 +111,14 @@ export function applyRevenueOverride(
       return order;
     }
 
+    const scaledQuantity = Math.round(order.quantity * multiplier);
+    const scaledSubtotal = order.lineItemSubtotal * multiplier;
+
     return {
       ...order,
-      lineItemSubtotal: order.lineItemSubtotal * multiplier
+      quantity: scaledQuantity,
+      lineItemSubtotal: scaledSubtotal,
+      price: scaledQuantity > 0 ? scaledSubtotal / scaledQuantity : 0
     };
   });
 
