@@ -17,7 +17,17 @@ export interface ParsedOrder {
   paymentMethod?: string;
 }
 
-export function parseCSVData(csvText: string, filterCity?: 'dc' | 'atlanta' | 'houston' | 'charlotte'): ParsedOrder[] {
+import type { City } from '../types/auth';
+
+const ALLOCATED_CITIES: City[] = ['houston', 'charlotte', 'dc2026'];
+
+const CITY_SOURCE_NAMES: Partial<Record<City, string>> = {
+  houston: 'Ebony Fit Weekend - Houston',
+  charlotte: 'Ebony Fit Weekend - Charlotte',
+  dc2026: 'Ebony Fit Weekend - DC 2026',
+};
+
+export function parseCSVData(csvText: string, filterCity?: City): ParsedOrder[] {
   const lines = csvText.trim().split('\n');
   const headers = parseCSVLine(lines[0]);
   
@@ -65,7 +75,7 @@ export function parseCSVData(csvText: string, filterCity?: 'dc' | 'atlanta' | 'h
   };
 
   // Determine which source to filter for
-  const isAllocatedCity = filterCity === 'houston' || filterCity === 'charlotte';
+  const isAllocatedCity = filterCity ? ALLOCATED_CITIES.includes(filterCity) : false;
   const targetSource = filterCity && !isAllocatedCity
     ? `Ebony Fit Weekend - ${filterCity === 'dc' ? 'DC' : 'Atlanta'}`
     : null;
@@ -132,11 +142,9 @@ export function parseCSVData(csvText: string, filterCity?: 'dc' | 'atlanta' | 'h
          (sourceName === 'Ebony Fit Weekend - DC' || sourceName === 'Ebony Fit Weekend - Atlanta'));
     
     if (isValidSource && status.toLowerCase() === 'completed' && orderId) {
-      const actualSourceName = filterCity === 'houston'
-        ? 'Ebony Fit Weekend - Houston'
-        : filterCity === 'charlotte'
-          ? 'Ebony Fit Weekend - Charlotte'
-          : sourceName;
+      const actualSourceName = filterCity && CITY_SOURCE_NAMES[filterCity]
+        ? CITY_SOURCE_NAMES[filterCity]!
+        : sourceName;
       console.log(`Valid order found: ${orderId} for ${actualSourceName}`);
       validOrderIds.add(orderId);
       

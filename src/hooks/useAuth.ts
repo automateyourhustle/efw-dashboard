@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import type { AuthState } from '../types/auth';
+import type { AuthState, City } from '../types/auth';
 
 export function useAuth() {
   const [authState, setAuthState] = useState<AuthState>({
@@ -35,7 +35,7 @@ export function useAuth() {
     localStorage.setItem('ebony-fit-auth', JSON.stringify(newAuthState));
   };
 
-  const selectCity = (city: 'dc' | 'atlanta' | 'houston' | 'charlotte') => {
+  const selectCity = (city: City) => {
     if (authState.user) {
       const newAuthState: AuthState = {
         ...authState,

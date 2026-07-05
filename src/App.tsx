@@ -12,20 +12,23 @@ import { SalesByMOP } from './components/SalesByMOP';
 import { useAuth } from './hooks/useAuth';
 import { useOrderData } from './hooks/useOrderData';
 import type { ParsedOrder } from './utils/csvParser';
+import type { City } from './types/auth';
 
 function App() {
   const { isAuthenticated, user, login, logout, selectCity } = useAuth();
   const { data: csvData, isLoading, error, uploadData, lastUpdated, fileName } = useOrderData(user?.selectedCity);
   const [activeTab, setActiveTab] = useState<'overview' | 'classes' | 'leaderboard' | 'customers' | 'multi' | 'mop'>('overview');
   const [showUploader, setShowUploader] = useState(false);
-  const cityDisplayName: Record<'dc' | 'atlanta' | 'houston' | 'charlotte', string> = {
+  const cityDisplayName: Record<City, string> = {
     dc: 'DC',
+    dc2026: 'DC',
     atlanta: 'Atlanta',
     houston: 'Houston',
     charlotte: 'Charlotte'
   };
-  const cityYear: Record<'dc' | 'atlanta' | 'houston' | 'charlotte', string> = {
+  const cityYear: Record<City, string> = {
     dc: '2025',
+    dc2026: '2026',
     atlanta: '2025',
     houston: '2026',
     charlotte: '2026'
@@ -125,7 +128,7 @@ function App() {
               <div className="flex items-center space-x-2 sm:space-x-3">
                 {user?.selectedCity && (
                   <select
-                    onChange={(e) => selectCity(e.target.value as 'dc' | 'atlanta' | 'houston' | 'charlotte')}
+                    onChange={(e) => selectCity(e.target.value as City)}
                     value={user.selectedCity}
                     className="inline-flex items-center space-x-1 sm:space-x-2 px-2 sm:px-3 py-2 bg-purple-600 text-white font-medium rounded-lg hover:bg-purple-700 transition-colors duration-200 text-xs sm:text-sm border-none cursor-pointer appearance-none bg-no-repeat bg-right pr-8"
                     style={{
@@ -135,6 +138,7 @@ function App() {
                     }}
                   >
                     <option value="dc" className="bg-white text-gray-900">DC 2025</option>
+                    <option value="dc2026" className="bg-white text-gray-900">DC 2026</option>
                     <option value="atlanta" className="bg-white text-gray-900">Atlanta 2025</option>
                     <option value="houston" className="bg-white text-gray-900">Houston 2026</option>
                     <option value="charlotte" className="bg-white text-gray-900">Charlotte 2026</option>

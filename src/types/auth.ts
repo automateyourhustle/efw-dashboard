@@ -1,7 +1,9 @@
+export type City = 'dc' | 'dc2026' | 'atlanta' | 'houston' | 'charlotte';
+
 export interface User {
   role: 'master' | 'team';
   hasAccess: boolean;
-  selectedCity?: 'dc' | 'atlanta' | 'houston' | 'charlotte';
+  selectedCity?: City;
 }
 
 export interface AuthState {

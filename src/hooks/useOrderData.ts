@@ -1,8 +1,11 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { parseCSVData, type ParsedOrder } from '../utils/csvParser';
+import type { City } from '../types/auth';
 
-export function useOrderData(city?: 'dc' | 'atlanta' | 'houston' | 'charlotte') {
+const ALLOCATED_CITIES: City[] = ['houston', 'charlotte', 'dc2026'];
+
+export function useOrderData(city?: City) {
   const [data, setData] = useState<ParsedOrder[]>([]);
   const [lastUpdated, setLastUpdated] = useState<string | null>(null);
   const [fileName, setFileName] = useState<string | null>(null);
@@ -77,8 +80,8 @@ export function useOrderData(city?: 'dc' | 'atlanta' | 'houston' | 'charlotte') 
       console.log(`Parsed ${parsedData.length} orders for city: ${city}`);
       
       // Validate that the CSV contains data for the selected city.
-      // Houston and Charlotte accept all completed orders (already handled in parser).
-      if (city !== 'houston' && city !== 'charlotte') {
+      // Allocated cities accept all completed orders (already handled in parser).
+      if (!ALLOCATED_CITIES.includes(city)) {
         const expectedSource = `Ebony Fit Weekend - ${city === 'dc' ? 'DC' : 'Atlanta'}`;
         const hasValidData = parsedData.some(order => order.sourceName === expectedSource);
         
@@ -90,7 +93,7 @@ export function useOrderData(city?: 'dc' | 'atlanta' | 'houston' | 'charlotte') 
           throw new Error(`No data found for ${city.toUpperCase()} in this CSV file. Please check that you've uploaded the correct file.`);
         }
       } else {
-        // For Houston/Charlotte, just check that we have some data
+        // For allocated cities, just check that we have some data
         if (parsedData.length === 0) {
           throw new Error('No valid order data found in this CSV file. Please check that the file contains completed orders.');
         }

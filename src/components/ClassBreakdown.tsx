@@ -58,6 +58,31 @@ const HOUSTON_CLASSES = [
   'EBONY FIT CLOSE OUT'
 ];
 
+// Complete list of DC 2026 classes
+const DC2026_CLASSES = [
+  'TRAP YOGA',
+  'INTERNATIONAL MOVEMENT',
+  'BAND CAMP',
+  'PILATES - BADDIE BUILT',
+  'ONLY YAMS',
+  'THE SENSUAL STRETCH',
+  'DMV JUMP CLUB',
+  'CRANK BOXING',
+  'SNATCHED - GLUTES & CORE',
+  'POWER HOUR',
+  'PILATES - TIGHT & TONE',
+  'J ERA BOOTCAMP',
+  'SWEAT STORM',
+  'THE BIG 3 STEP EXPERIENCE!',
+  '7PM X FIT-X EXPERIENCE',
+  'TRAP MOBILITY + MIMOSAS',
+  'BOOTY BOOTCAMP',
+  'CITY LEGENDS',
+  'CELLULAR SELF CARE',
+  'GOGETIT BOOTCAMP',
+  'CLASS TICKET BUNDLES'
+];
+
 // Complete list of Charlotte classes
 const CHARLOTTE_CLASSES = [
   'BEAT BOXING & PILATES',
@@ -94,6 +119,9 @@ export function ClassBreakdown({ data, userRole }: ClassBreakdownProps) {
     const isCharlotteData = data.some(order =>
       order.sourceName === 'Ebony Fit Weekend - Charlotte'
     );
+    const isDc2026Data = data.some(order =>
+      order.sourceName === 'Ebony Fit Weekend - DC 2026'
+    );
     
     // Initialize stats with all classes (for Atlanta/Houston) or empty object (for DC)
     const initialStats: Record<string, {
@@ -129,6 +157,17 @@ export function ClassBreakdown({ data, userRole }: ClassBreakdownProps) {
     } else if (isCharlotteData) {
       // For Charlotte, initialize all classes with zero values
       CHARLOTTE_CLASSES.forEach(className => {
+        initialStats[className] = {
+          name: className,
+          quantity: 0,
+          revenue: 0,
+          customers: new Set<string>(),
+          orders: []
+        };
+      });
+    } else if (isDc2026Data) {
+      // For DC 2026, initialize all classes with zero values
+      DC2026_CLASSES.forEach(className => {
         initialStats[className] = {
           name: className,
           quantity: 0,
