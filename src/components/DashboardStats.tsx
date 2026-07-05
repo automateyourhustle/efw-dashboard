@@ -4,9 +4,10 @@ import { type ParsedOrder } from '../utils/csvParser';
 
 interface DashboardStatsProps {
   data: ParsedOrder[];
+  overrideTotalRevenue?: number | null;
 }
 
-export function DashboardStats({ data }: DashboardStatsProps) {
+export function DashboardStats({ data, overrideTotalRevenue }: DashboardStatsProps) {
   const stats = React.useMemo(() => {
     // Calculate total revenue by summing unique order totals
     const uniqueOrders = new Map<string, number>();
@@ -15,7 +16,7 @@ export function DashboardStats({ data }: DashboardStatsProps) {
         uniqueOrders.set(order.orderId, order.orderTotalAmount);
       }
     });
-    const totalRevenue = Array.from(uniqueOrders.values()).reduce((sum, amount) => sum + amount, 0);
+    const totalRevenue = overrideTotalRevenue ?? Array.from(uniqueOrders.values()).reduce((sum, amount) => sum + amount, 0);
     
     const totalQuantity = data.reduce((sum, order) => sum + order.quantity, 0);
     const uniqueCustomers = new Set(data.map(order => order.customerEmail)).size;
@@ -51,7 +52,7 @@ export function DashboardStats({ data }: DashboardStatsProps) {
       topClasses,
       classStats
     };
-  }, [data]);
+  }, [data, overrideTotalRevenue]);
 
   const statCards = [
     {

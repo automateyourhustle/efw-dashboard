@@ -1,10 +1,11 @@
 import React, { useState, useMemo } from 'react';
 import { Search, SortAsc, SortDesc, Download } from 'lucide-react';
 import { type ParsedOrder } from '../utils/csvParser';
+import { hasMasterAccess, type UserRole } from '../types/auth';
 
 interface ClassBreakdownProps {
   data: ParsedOrder[];
-  userRole?: 'master' | 'team';
+  userRole?: UserRole;
 }
 
 // Complete list of Atlanta classes
@@ -106,7 +107,7 @@ export function ClassBreakdown({ data, userRole }: ClassBreakdownProps) {
   const [sortField, setSortField] = useState<'name' | 'quantity' | 'revenue'>('quantity');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   
-  const isMaster = userRole === 'master';
+  const isMaster = hasMasterAccess(userRole);
 
   const classStats = useMemo(() => {
     // First, determine which city this data is for

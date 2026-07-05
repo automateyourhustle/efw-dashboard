@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Upload, BarChart3, Users, DollarSign, FileDown, Search, Filter, LogOut, Trophy, AlertCircle, CreditCard } from 'lucide-react';
+import { Upload, BarChart3, Users, DollarSign, Filter, LogOut, Trophy, AlertCircle, CreditCard, Shield } from 'lucide-react';
 import { LoginScreen } from './components/LoginScreen';
 import { CitySelector } from './components/CitySelector';
 import { DataUploader } from './components/DataUploader';
@@ -9,15 +9,19 @@ import { CustomerLists } from './components/CustomerLists';
 import { MultiPurchaseCustomers } from './components/MultiPurchaseCustomers';
 import { Leaderboard } from './components/Leaderboard';
 import { SalesByMOP } from './components/SalesByMOP';
+import { AdminPanel } from './components/AdminPanel';
 import { useAuth } from './hooks/useAuth';
 import { useOrderData } from './hooks/useOrderData';
-import type { ParsedOrder } from './utils/csvParser';
+import { useCityOverrides } from './hooks/useCityOverrides';
+import { applyRevenueOverride } from './utils/revenue';
 import type { City } from './types/auth';
+import { hasMasterAccess, isSuperAdmin as checkIsSuperAdmin } from './types/auth';
 
 function App() {
   const { isAuthenticated, user, login, logout, selectCity } = useAuth();
-  const { data: csvData, isLoading, error, uploadData, lastUpdated, fileName } = useOrderData(user?.selectedCity);
-  const [activeTab, setActiveTab] = useState<'overview' | 'classes' | 'leaderboard' | 'customers' | 'multi' | 'mop'>('overview');
+  const { data: csvData, isLoading: isOrderLoading, error, uploadData, lastUpdated, fileName } = useOrderData(user?.selectedCity);
+  const { overrides, isLoading: isOverrideLoading, saveOverrides, clearOverrides } = useCityOverrides(user?.selectedCity);
+  const [activeTab, setActiveTab] = useState<'overview' | 'classes' | 'leaderboard' | 'customers' | 'multi' | 'mop' | 'admin'>('overview');
   const [showUploader, setShowUploader] = useState(false);
   const cityDisplayName: Record<City, string> = {
     dc: 'DC',
@@ -33,9 +37,18 @@ function App() {
     houston: '2026',
     charlotte: '2026'
   };
+  const cityLabel = `${cityDisplayName[user?.selectedCity ?? 'dc']} ${cityYear[user?.selectedCity ?? 'dc']}`;
+
+  const displayData = useMemo(
+    () => applyRevenueOverride(csvData, overrides?.overrideTotalRevenue),
+    [csvData, overrides?.overrideTotalRevenue]
+  );
+  const displayLastUpdated = overrides?.overrideLastUpdated ?? lastUpdated;
 
   const hasData = csvData.length > 0;
-  const isMaster = user?.role === 'master';
+  const isLoading = isOrderLoading || isOverrideLoading;
+  const isMaster = hasMasterAccess(user?.role);
+  const isSuperAdmin = checkIsSuperAdmin(user?.role);
   const isTeam = user?.role === 'team';
 
   const handleDataUpload = async (csvText: string, fileName?: string) => {
@@ -71,15 +84,21 @@ function App() {
   }
   // Filter tabs based on user role
   const allTabs = [
-    { id: 'overview' as const, label: 'Overview', icon: BarChart3, masterOnly: true },
-    { id: 'classes' as const, label: 'Class Breakdown', icon: Filter },
-    { id: 'leaderboard' as const, label: 'Leaderboard', icon: Trophy },
-    { id: 'customers' as const, label: 'Customer Lists', icon: Users },
-    { id: 'multi' as const, label: 'Multi-Purchase', icon: DollarSign, masterOnly: true },
-    { id: 'mop' as const, label: 'Sales by MOP', icon: CreditCard, masterOnly: true },
+    { id: 'overview' as const, label: 'Overview', icon: BarChart3, masterOnly: true, requiresData: true },
+    { id: 'classes' as const, label: 'Class Breakdown', icon: Filter, requiresData: true },
+    { id: 'leaderboard' as const, label: 'Leaderboard', icon: Trophy, requiresData: true },
+    { id: 'customers' as const, label: 'Customer Lists', icon: Users, requiresData: true },
+    { id: 'multi' as const, label: 'Multi-Purchase', icon: DollarSign, masterOnly: true, requiresData: true },
+    { id: 'mop' as const, label: 'Sales by MOP', icon: CreditCard, masterOnly: true, requiresData: true },
+    { id: 'admin' as const, label: 'Admin', icon: Shield, superAdminOnly: true, requiresData: false },
   ];
 
-  const tabs = allTabs.filter(tab => isMaster || !tab.masterOnly);
+  const tabs = allTabs.filter(tab => {
+    if ('superAdminOnly' in tab && tab.superAdminOnly && !isSuperAdmin) return false;
+    if ('masterOnly' in tab && tab.masterOnly && !isMaster) return false;
+    if (tab.requiresData && !hasData) return false;
+    return true;
+  });
 
   if (isLoading) {
     return (
@@ -106,23 +125,20 @@ function App() {
                   Ebony Fit Weekend - {cityDisplayName[user?.selectedCity ?? 'dc']} {cityYear[user?.selectedCity ?? 'dc']}
                 </h1>
                 <p className="text-xs sm:text-sm text-gray-500">
-                  {cityDisplayName[user?.selectedCity ?? 'dc']} Event Dashboard{user?.role === 'master' ? ' • Master Access' : user?.role === 'team' ? ' • Team Access' : ''}
+                  {cityDisplayName[user?.selectedCity ?? 'dc']} Event Dashboard
+                  {isSuperAdmin ? ' • Super Admin Access' : user?.role === 'master' ? ' • Master Access' : user?.role === 'team' ? ' • Team Access' : ''}
                 </p>
               </div>
             </div>
             <div className="flex items-center justify-between sm:justify-end space-x-3 sm:space-x-4">
-              {hasData && (
-                <div className="text-left sm:text-right">
-                  {lastUpdated && (
-                    <div className="text-xs sm:text-sm text-gray-600">
-                      Updated: {new Date(lastUpdated).toLocaleDateString()} at {new Date(lastUpdated).toLocaleTimeString('en-US', {
-                        timeZone: 'America/New_York',
-                        hour: 'numeric',
-                        minute: '2-digit',
-                        hour12: true
-                      })} EST
-                    </div>
-                  )}
+              {displayLastUpdated && (
+                <div className="text-xs sm:text-sm text-gray-600">
+                  Updated: {new Date(displayLastUpdated).toLocaleDateString()} at {new Date(displayLastUpdated).toLocaleTimeString('en-US', {
+                    timeZone: 'America/New_York',
+                    hour: 'numeric',
+                    minute: '2-digit',
+                    hour12: true
+                  })} EST
                 </div>
               )}
               <div className="flex items-center space-x-2 sm:space-x-3">
@@ -152,6 +168,19 @@ function App() {
                   <span className="hidden xs:inline">{hasData ? 'Update' : 'Upload'}</span>
                   <span className="xs:hidden">Data</span>
                 </button>
+                {isSuperAdmin && (
+                  <button
+                    onClick={() => handleTabChange('admin')}
+                    className={`inline-flex items-center space-x-1 sm:space-x-2 px-2 sm:px-3 py-2 font-medium rounded-lg transition-colors duration-200 text-xs sm:text-sm ${
+                      activeTab === 'admin'
+                        ? 'bg-purple-700 text-white'
+                        : 'bg-purple-600 text-white hover:bg-purple-700'
+                    }`}
+                  >
+                    <Shield className="w-3 h-3 sm:w-4 sm:h-4" />
+                    <span className="hidden sm:inline">Admin</span>
+                  </button>
+                )}
                 <button
                   onClick={logout}
                   className="inline-flex items-center space-x-1 sm:space-x-2 px-2 sm:px-3 py-2 bg-gray-600 text-white font-medium rounded-lg hover:bg-gray-700 transition-colors duration-200 text-xs sm:text-sm"
@@ -196,7 +225,7 @@ function App() {
           </div>
         )}
 
-        {!hasData && !showUploader ? (
+        {!hasData && !showUploader && activeTab !== 'admin' ? (
           <div className="max-w-2xl mx-auto">
             <div className="text-center mb-8">
               <div className="w-16 h-16 bg-gradient-to-r from-purple-600 to-blue-600 rounded-xl mx-auto mb-4 flex items-center justify-center">
@@ -218,7 +247,7 @@ function App() {
             </div>
           </div>
         ) : (
-          hasData && (
+          (hasData || activeTab === 'admin') && (
           <div className="space-y-8">
             <nav className="mb-8">
               <div className="bg-white p-1 rounded-lg shadow-sm">
@@ -241,7 +270,8 @@ function App() {
                        id === 'leaderboard' ? 'Ranks' :
                        id === 'customers' ? 'Lists' : 
                        id === 'multi' ? 'Multi' :
-                       'MOP'}
+                       id === 'mop' ? 'MOP' :
+                       'Admin'}
                     </span>
                   </button>
                 ))}
@@ -249,12 +279,27 @@ function App() {
               </div>
             </nav>
 
-            {activeTab === 'overview' && isMaster && <DashboardStats data={csvData} />}
-            {activeTab === 'classes' && <ClassBreakdown data={csvData} userRole={user?.role} />}
-            {activeTab === 'leaderboard' && <Leaderboard data={csvData} userRole={user?.role} />}
-            {activeTab === 'customers' && <CustomerLists data={csvData} />}
-            {activeTab === 'multi' && isMaster && <MultiPurchaseCustomers data={csvData} />}
-            {activeTab === 'mop' && isMaster && <SalesByMOP data={csvData} />}
+            {activeTab === 'overview' && isMaster && (
+              <DashboardStats
+                data={displayData}
+                overrideTotalRevenue={overrides?.overrideTotalRevenue}
+              />
+            )}
+            {activeTab === 'classes' && <ClassBreakdown data={displayData} userRole={user?.role} />}
+            {activeTab === 'leaderboard' && <Leaderboard data={displayData} userRole={user?.role} />}
+            {activeTab === 'customers' && <CustomerLists data={displayData} />}
+            {activeTab === 'multi' && isMaster && <MultiPurchaseCustomers data={displayData} />}
+            {activeTab === 'mop' && isMaster && <SalesByMOP data={displayData} />}
+            {activeTab === 'admin' && isSuperAdmin && (
+              <AdminPanel
+                cityLabel={cityLabel}
+                data={csvData}
+                rawLastUpdated={lastUpdated}
+                overrides={overrides}
+                onSave={saveOverrides}
+                onClear={clearOverrides}
+              />
+            )}
           </div>
           )
         )}

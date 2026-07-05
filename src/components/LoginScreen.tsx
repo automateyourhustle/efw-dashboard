@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { Lock, Eye, EyeOff, Shield } from 'lucide-react';
 
+import type { UserRole } from '../types/auth';
+
 interface LoginScreenProps {
-  onLogin: (role: 'master' | 'team') => void;
+  onLogin: (role: UserRole) => void;
 }
 
 export function LoginScreen({ onLogin }: LoginScreenProps) {
@@ -19,7 +21,9 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
     // Simulate a brief loading state for better UX
     await new Promise(resolve => setTimeout(resolve, 500));
 
-    if (password === 'gmoney123') {
+    if (password === 'sidehustlemjb') {
+      onLogin('superadmin');
+    } else if (password === 'gmoney123') {
       onLogin('master');
     } else if (password === 'efwteam') {
       onLogin('team');

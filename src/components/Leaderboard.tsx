@@ -1,10 +1,11 @@
 import React, { useState, useMemo } from 'react';
 import { Trophy, Medal, Award, Download, Search, SortAsc, SortDesc } from 'lucide-react';
 import { type ParsedOrder } from '../utils/csvParser';
+import { hasMasterAccess, type UserRole } from '../types/auth';
 
 interface LeaderboardProps {
   data: ParsedOrder[];
-  userRole?: 'master' | 'team';
+  userRole?: UserRole;
 }
 
 export function Leaderboard({ data, userRole }: LeaderboardProps) {
@@ -12,7 +13,7 @@ export function Leaderboard({ data, userRole }: LeaderboardProps) {
   const [sortField, setSortField] = useState<'name' | 'quantity' | 'revenue' | 'customers'>('quantity');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   
-  const isMaster = userRole === 'master';
+  const isMaster = hasMasterAccess(userRole);
 
   const leaderboardData = useMemo(() => {
     const stats = data.reduce((acc, order) => {

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import type { AuthState, City } from '../types/auth';
+import type { AuthState, City, UserRole } from '../types/auth';
 
 export function useAuth() {
   const [authState, setAuthState] = useState<AuthState>({
@@ -21,7 +21,7 @@ export function useAuth() {
     }
   }, []);
 
-  const login = (role: 'master' | 'team') => {
+  const login = (role: UserRole) => {
     const newAuthState: AuthState = {
       isAuthenticated: true,
       user: {
