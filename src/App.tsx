@@ -27,6 +27,7 @@ function App() {
     dc: 'DC',
     dc2026: 'DC',
     atlanta: 'Atlanta',
+    atlanta2026: 'Atlanta',
     houston: 'Houston',
     charlotte: 'Charlotte'
   };
@@ -34,6 +35,7 @@ function App() {
     dc: '2025',
     dc2026: '2026',
     atlanta: '2025',
+    atlanta2026: '2026',
     houston: '2026',
     charlotte: '2026'
   };
@@ -156,6 +158,7 @@ function App() {
                     <option value="dc" className="bg-white text-gray-900">DC 2025</option>
                     <option value="dc2026" className="bg-white text-gray-900">DC 2026</option>
                     <option value="atlanta" className="bg-white text-gray-900">Atlanta 2025</option>
+                    <option value="atlanta2026" className="bg-white text-gray-900">Atlanta 2026</option>
                     <option value="houston" className="bg-white text-gray-900">Houston 2026</option>
                     <option value="charlotte" className="bg-white text-gray-900">Charlotte 2026</option>
                   </select>

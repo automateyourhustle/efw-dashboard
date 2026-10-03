@@ -1,4 +1,4 @@
-export type City = 'dc' | 'dc2026' | 'atlanta' | 'houston' | 'charlotte';
+export type City = 'dc' | 'dc2026' | 'atlanta' | 'atlanta2026' | 'houston' | 'charlotte';
 
 export type UserRole = 'master' | 'team' | 'superadmin';
 

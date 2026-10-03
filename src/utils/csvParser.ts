@@ -19,12 +19,13 @@ export interface ParsedOrder {
 
 import type { City } from '../types/auth';
 
-const ALLOCATED_CITIES: City[] = ['houston', 'charlotte', 'dc2026'];
+const ALLOCATED_CITIES: City[] = ['houston', 'charlotte', 'dc2026', 'atlanta2026'];
 
 const CITY_SOURCE_NAMES: Partial<Record<City, string>> = {
   houston: 'Ebony Fit Weekend - Houston',
   charlotte: 'Ebony Fit Weekend - Charlotte',
   dc2026: 'Ebony Fit Weekend - DC 2026',
+  atlanta2026: 'Ebony Fit Weekend - Atlanta 2026',
 };
 
 export function parseCSVData(csvText: string, filterCity?: City): ParsedOrder[] {

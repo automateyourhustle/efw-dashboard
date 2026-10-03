@@ -36,6 +36,30 @@ const ATLANTA_CLASSES = [
   'CLASS TICKET BUNDLES - 4 Class Ticket Bundle'
 ];
 
+// Complete list of Atlanta 2026 classes
+const ATLANTA_2026_CLASSES = [
+  'THE SENSUAL STRETCH',
+  'GIRLS NIGHT OUT',
+  'BRICKS AND BUNS',
+  'TRAP YOGA',
+  'BANDS & GLUTES',
+  'ONLY YAMS',
+  'KEDDLESTETICS',
+  'JUMP ROPE FITNESS',
+  'POWER HOUR',
+  'GO GET IT HEAT',
+  'J ERA BOOTCAMP',
+  'SWEAT STORM',
+  'DEADLIFT PARTY',
+  'SUNDAY PRESSURE',
+  'PEACHES PLEASE GLUTE PARTY',
+  'CELLULAR SELF-CARE: NERVOUS SYSTEM FITNESS EXPERIENCE WITH KI',
+  'TRAP MOBILITY & MIMOSAS',
+  'FIX X BEAT BOXING',
+  'CLASS TICKET BUNDLES',
+  'EBONY FIT FIELD DAY'
+];
+
 // Complete list of Houston classes
 const HOUSTON_CLASSES = [
   'CLASS TICKET BUNDLES - 2 Class Ticket Bundle',
@@ -111,7 +135,10 @@ export function ClassBreakdown({ data, userRole }: ClassBreakdownProps) {
 
   const classStats = useMemo(() => {
     // First, determine which city this data is for
-    const isAtlantaData = data.some(order => 
+    const isAtlanta2026Data = data.some(order =>
+      order.sourceName === 'Ebony Fit Weekend - Atlanta 2026'
+    );
+    const isAtlantaData = !isAtlanta2026Data && data.some(order =>
       order.sourceName === 'Ebony Fit Weekend - Atlanta'
     );
     const isHoustonData = data.some(order => 
@@ -133,7 +160,17 @@ export function ClassBreakdown({ data, userRole }: ClassBreakdownProps) {
       orders: ParsedOrder[];
     }> = {};
     
-    if (isAtlantaData) {
+    if (isAtlanta2026Data) {
+      ATLANTA_2026_CLASSES.forEach(className => {
+        initialStats[className] = {
+          name: className,
+          quantity: 0,
+          revenue: 0,
+          customers: new Set<string>(),
+          orders: []
+        };
+      });
+    } else if (isAtlantaData) {
       // For Atlanta, initialize all classes with zero values
       ATLANTA_CLASSES.forEach(className => {
         initialStats[className] = {

@@ -3,7 +3,7 @@ import { supabase } from '../lib/supabase';
 import { parseCSVData, type ParsedOrder } from '../utils/csvParser';
 import type { City } from '../types/auth';
 
-const ALLOCATED_CITIES: City[] = ['houston', 'charlotte', 'dc2026'];
+const ALLOCATED_CITIES: City[] = ['houston', 'charlotte', 'dc2026', 'atlanta2026'];
 
 export function useOrderData(city?: City) {
   const [data, setData] = useState<ParsedOrder[]>([]);
