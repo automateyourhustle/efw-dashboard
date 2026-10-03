@@ -306,11 +306,19 @@ function parseCSVLine(line: string): string[] {
 function cleanClassName(className: string): string {
   // Remove "@ 24" or similar patterns
   let cleaned = className.replace(/\s*@\s*\d+\s*$/, '');
-  
+
+  // Remove trailing price tiers (e.g. "CLASS NAME - CLASS NAME - $29")
+  while (/\s-\s\$\d+(?:\.\d{2})?\s*$/i.test(cleaned)) {
+    cleaned = cleaned.replace(/\s-\s\$\d+(?:\.\d{2})?\s*$/i, '').trim();
+  }
+
   // Handle duplicate names with various patterns
   const parts = cleaned.split(' - ');
   if (parts.length === 2 && parts[0].trim().toLowerCase() === parts[1].trim().toLowerCase()) {
     // Simple duplicates like "ONLY YAMS - ONLY YAMS" or "TRAP MOBILITY - Trap Mobility"
+    cleaned = parts[0].trim();
+  } else if (parts.length >= 3 && parts[0].trim().toLowerCase() === parts[1].trim().toLowerCase()) {
+    // e.g. "EBONY FIT FIELD DAY - EBONY FIT FIELD DAY - $29" (after price strip)
     cleaned = parts[0].trim();
   } else if (parts.length === 4) {
     // Complex duplicates like "PILATES - TIGHT & TONE - PILATES - TIGHT & TONE"
@@ -320,6 +328,10 @@ function cleanClassName(className: string): string {
       cleaned = firstHalf;
     }
   }
-  
+
+  if (/ebony\s*fit\s*field\s*day/i.test(cleaned)) {
+    cleaned = 'EBONY FIT FIELD DAY';
+  }
+
   return cleaned.trim();
 }
